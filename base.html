@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Hungarian voice test</title>
+</head>
+
+<body>
+
+    <p>Jó reggelt! Hogy vagy ma?</p>
+
+    <select id="voiceSelect"></select>
+    <button onclick="speak()">🔊 Speak</button>
+
+    <script>
+        const synth = window.speechSynthesis;
+        const select = document.getElementById("voiceSelect");
+
+        function loadVoices() {
+            const voices = synth.getVoices();
+
+            select.innerHTML = "";
+
+            voices.forEach((voice, index) => {
+                const option = document.createElement("option");
+
+                option.value = index;
+                option.textContent =
+                    `${voice.name} — ${voice.lang}` +
+                    (voice.localService ? " [local]" : " [remote]");
+
+                if (voice.lang.toLowerCase().startsWith("hu")) {
+                    option.selected = true;
+                }
+
+                select.appendChild(option);
+            });
+
+            console.table(
+                voices.map(v => ({
+                    name: v.name,
+                    lang: v.lang,
+                    local: v.localService,
+                    uri: v.voiceURI
+                }))
+            );
+        }
+
+        loadVoices();
+
+        if ("onvoiceschanged" in synth) {
+            synth.onvoiceschanged = loadVoices;
+        }
+
+        function speak() {
+            const voices = synth.getVoices();
+            const voice = voices[Number(select.value)];
+
+            const utterance = new SpeechSynthesisUtterance(
+                "Jó reggelt! Hogy vagy ma?"
+            );
+
+            utterance.lang = "hu-HU";
+            utterance.voice = voice;
+            utterance.rate = 0.9;
+
+            console.log("Selected voice:", voice);
+
+            synth.cancel();
+            synth.speak(utterance);
+        }
+    </script>
+
+</body>
+
+</html>
