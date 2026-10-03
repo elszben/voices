@@ -3,39 +3,51 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hungarian voice test</title>
 </head>
 
 <body>
 
-    <p>Jó reggelt! Hogy vagy ma?</p>
+    <textarea id="text" rows="3" cols="40">Jó reggelt! Hogy vagy ma?</textarea>
 
-    <select id="voiceSelect"></select>
-    <button onclick="speak()">🔊 Speak</button>
+    <p>
+        <select id="voiceSelect"></select>
+        <button id="speakButton" onclick="speak()">🔊 Speak</button>
+    </p>
 
     <script>
         const synth = window.speechSynthesis;
         const select = document.getElementById("voiceSelect");
+        const textInput = document.getElementById("text");
 
         function loadVoices() {
             const voices = synth.getVoices();
+            const previous = select.value;
 
             select.innerHTML = "";
 
-            voices.forEach((voice, index) => {
+            voices.forEach(voice => {
                 const option = document.createElement("option");
 
-                option.value = index;
+                option.value = voice.voiceURI;
                 option.textContent =
                     `${voice.name} — ${voice.lang}` +
                     (voice.localService ? " [local]" : " [remote]");
 
-                if (voice.lang.toLowerCase().startsWith("hu")) {
-                    option.selected = true;
-                }
-
                 select.appendChild(option);
             });
+
+            if (voices.some(v => v.voiceURI === previous)) {
+                select.value = previous;
+            } else {
+                const hungarian = voices.find(v =>
+                    v.lang.toLowerCase().startsWith("hu")
+                );
+                if (hungarian) {
+                    select.value = hungarian.voiceURI;
+                }
+            }
 
             console.table(
                 voices.map(v => ({
@@ -47,22 +59,31 @@
             );
         }
 
-        loadVoices();
+        if (synth) {
+            loadVoices();
 
-        if ("onvoiceschanged" in synth) {
-            synth.onvoiceschanged = loadVoices;
+            if ("onvoiceschanged" in synth) {
+                synth.onvoiceschanged = loadVoices;
+            }
+        } else {
+            document.getElementById("speakButton").disabled = true;
+            textInput.insertAdjacentHTML(
+                "afterend",
+                "<p>This browser does not support speech synthesis.</p>"
+            );
         }
 
         function speak() {
-            const voices = synth.getVoices();
-            const voice = voices[Number(select.value)];
-
-            const utterance = new SpeechSynthesisUtterance(
-                "Jó reggelt! Hogy vagy ma?"
+            const voice = synth.getVoices().find(v =>
+                v.voiceURI === select.value
             );
 
+            const utterance = new SpeechSynthesisUtterance(textInput.value);
+
             utterance.lang = "hu-HU";
-            utterance.voice = voice;
+            if (voice) {
+                utterance.voice = voice;
+            }
             utterance.rate = 0.9;
 
             console.log("Selected voice:", voice);
