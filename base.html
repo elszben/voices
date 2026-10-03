@@ -5,21 +5,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hungarian voice test</title>
+    <style>
+        #sentences button {
+            background: none;
+            border: none;
+            padding: 0.25em 0;
+            font: inherit;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        #sentences button:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 
 <body>
 
-    <textarea id="text" rows="3" cols="40">Jó reggelt! Hogy vagy ma?</textarea>
+    <p><select id="voiceSelect"></select></p>
 
-    <p>
-        <select id="voiceSelect"></select>
-        <button id="speakButton" onclick="speak()">🔊 Speak</button>
-    </p>
+    <ul id="sentences"></ul>
 
     <script>
+        const sentences = [
+            "Jó reggelt! Hogy vagy ma?",
+            "Ma szép idő lesz! Nem fog esni az eső!",
+        ];
+
         const synth = window.speechSynthesis;
         const select = document.getElementById("voiceSelect");
-        const textInput = document.getElementById("text");
+        const list = document.getElementById("sentences");
 
         function loadVoices() {
             const voices = synth.getVoices();
@@ -59,6 +75,18 @@
             );
         }
 
+        sentences.forEach(sentence => {
+            const item = document.createElement("li");
+            const button = document.createElement("button");
+
+            button.textContent = sentence;
+            button.disabled = !synth;
+            button.addEventListener("click", () => speak(sentence));
+
+            item.appendChild(button);
+            list.appendChild(item);
+        });
+
         if (synth) {
             loadVoices();
 
@@ -66,19 +94,18 @@
                 synth.onvoiceschanged = loadVoices;
             }
         } else {
-            document.getElementById("speakButton").disabled = true;
-            textInput.insertAdjacentHTML(
-                "afterend",
+            list.insertAdjacentHTML(
+                "beforebegin",
                 "<p>This browser does not support speech synthesis.</p>"
             );
         }
 
-        function speak() {
+        function speak(text) {
             const voice = synth.getVoices().find(v =>
                 v.voiceURI === select.value
             );
 
-            const utterance = new SpeechSynthesisUtterance(textInput.value);
+            const utterance = new SpeechSynthesisUtterance(text);
 
             utterance.lang = "hu-HU";
             if (voice) {
