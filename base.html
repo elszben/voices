@@ -27,6 +27,11 @@
 
     <ul id="sentences"></ul>
 
+    <form id="customForm">
+        <input id="customText" type="text" placeholder="Írj be egy mondatot…" size="40">
+        <button type="submit">🔊 Speak</button>
+    </form>
+
     <script>
         const sentences = [
             "Jó reggelt! Hogy vagy ma?",
@@ -87,6 +92,17 @@
             list.appendChild(item);
         });
 
+        const customForm = document.getElementById("customForm");
+        const customText = document.getElementById("customText");
+
+        customForm.addEventListener("submit", event => {
+            event.preventDefault();
+            const text = customText.value.trim();
+            if (text && synth) {
+                speak(text);
+            }
+        });
+
         if (synth) {
             loadVoices();
 
@@ -94,6 +110,7 @@
                 synth.onvoiceschanged = loadVoices;
             }
         } else {
+            customForm.querySelector("button").disabled = true;
             list.insertAdjacentHTML(
                 "beforebegin",
                 "<p>This browser does not support speech synthesis.</p>"
